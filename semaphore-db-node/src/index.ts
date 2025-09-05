@@ -71,7 +71,7 @@ async function spawnTask() {
       }
 
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 2000));
     }
   } catch (e) {
     log.error("Task failed with error:", e);
