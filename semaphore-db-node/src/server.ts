@@ -3,9 +3,18 @@ import url from "url";
 
 import { log } from "./index";
 
+interface TaskInfo {
+  taskId: string;
+  description: string;
+  status: "waiting" | "running";
+  progress: number; // percentage from 0 to 100
+  startTime: string; // ISO string
+  message: string; // additional info about the task
+}
+
 interface ApplicationState {
   numberOfTasks: number;
-  tasks: string[];
+  tasks: TaskInfo[];
 }
 
 export const appState: ApplicationState = {

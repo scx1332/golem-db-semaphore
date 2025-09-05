@@ -23,20 +23,62 @@ jsLogger.setHandler(
 
 export const log: ILogger = jsLogger.get("myLogger");
 
+let taskNo = -1;
+
 async function spawnTask() {
   log.info("Task spawned, doing nothing and exiting...");
   const taskId = uuidv4();
-  try {
-    appState.numberOfTasks += 1;
-    appState.tasks.push(taskId);
+  {
+    log.info(
+      "Checking for semaphore access...",
+    );
 
-    await new Promise((resolve) => setTimeout(resolve, 10000));
+    for (const myTask of appState.tasks) {
+      if (myTask.taskId !== taskId) continue;
+      myTask.progress = 0;
+      myTask.message = `Task is waiting for semaphore access`;
+      myTask.status = "waiting";
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    if (appState.tasks.length >= 5) {
+      log.info("Task not started.");
+      return;
+    }
+  }
+
+  try {
+    {
+      //add task
+      //should be atomic
+      taskNo += 1;
+      appState.numberOfTasks += 1;
+      appState.tasks.push({
+        taskId,
+        description: `Task no ${taskNo}`,
+        status: "running",
+        message: "Task is running",
+        progress: 0,
+        startTime: new Date().toISOString(),
+      });
+    }
+    for (let i = 0; i < 10; i++) {
+
+      for (const myTask of appState.tasks) {
+        if (myTask.taskId !== taskId) continue;
+        myTask.progress = (i + 1) * 10;
+        myTask.message = `Task is running: ${myTask.progress}% done`;
+      }
+
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
   } catch (e) {
     log.error("Task failed with error:", e);
   } finally {
-    log.info("Task finished.");
+    log.info(`Task ${taskId} finished.`);
     appState.numberOfTasks -= 1;
-    appState.tasks = appState.tasks.filter((t) => t !== taskId);
+    appState.tasks = appState.tasks.filter((t) => t.taskId !== taskId);
   }
 }
 
@@ -69,7 +111,8 @@ async function init() {
 
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    await spawnTask();
+    // Spawn a task into the background
+    const _ = spawnTask();
   }
 
   // Fill your initialization code here
