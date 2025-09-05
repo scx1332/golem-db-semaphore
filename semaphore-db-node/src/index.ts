@@ -4,9 +4,10 @@
 
 //Hono is a web framework similar to Express
 import jsLogger, { ILogger } from "js-logger";
-import {getBytes, Wallet} from "ethers";
-import {AccountData, createClient, Tagged} from "golem-base-sdk";
-import {startStatusServer} from "./server";
+import { getBytes, Wallet } from "ethers";
+import { AccountData, createClient, Tagged } from "golem-base-sdk";
+import { appState, startStatusServer } from "./server";
+import { v4 as uuidv4 } from "uuid";
 
 // Configure logger for convenience
 jsLogger.useDefaults();
@@ -22,12 +23,21 @@ jsLogger.setHandler(
 
 export const log: ILogger = jsLogger.get("myLogger");
 
-
 async function spawnTask() {
   log.info("Task spawned, doing nothing and exiting...");
+  const taskId = uuidv4();
+  try {
+    appState.numberOfTasks += 1;
+    appState.tasks.push(taskId);
 
-
-
+    await new Promise((resolve) => setTimeout(resolve, 10000));
+  } catch (e) {
+    log.error("Task failed with error:", e);
+  } finally {
+    log.info("Task finished.");
+    appState.numberOfTasks -= 1;
+    appState.tasks = appState.tasks.filter((t) => t !== taskId);
+  }
 }
 
 async function init() {
@@ -36,13 +46,16 @@ async function init() {
   const wallet = new Wallet(process.env.WALLET_PRIVATE_KEY || "");
   log.info("Successfully decrypted wallet for account", wallet.address);
 
-  const key: AccountData = new Tagged("privatekey", getBytes(wallet.privateKey));
+  const key: AccountData = new Tagged(
+    "privatekey",
+    getBytes(wallet.privateKey),
+  );
 
   const client = await createClient(
     60138453033,
     key,
     "https://ethwarsaw.holesky.golemdb.io/rpc",
-    "wss://ethwarsaw.holesky.golemdb.io/rpc/ws"
+    "wss://ethwarsaw.holesky.golemdb.io/rpc/ws",
   );
 
   const port = process.env.PORT || 5555;
@@ -54,7 +67,7 @@ async function init() {
     log.info("Current Ethereum block number is", block);
     log.info("Connected to Golem DB as", wallet.address);
 
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     await spawnTask();
   }
@@ -63,9 +76,7 @@ async function init() {
 }
 
 init()
-  .then(() => {
-
-  })
+  .then(() => {})
   .catch((e) => {
     log.error(e);
     process.exit(1);

@@ -1,11 +1,19 @@
 import http from "http";
 import url from "url";
 
-import {log} from "./index";
+import { log } from "./index";
 
-export function startStatusServer(
-  listenAddr: string,
-) {
+interface ApplicationState {
+  numberOfTasks: number;
+  tasks: string[];
+}
+
+export const appState: ApplicationState = {
+  numberOfTasks: 0,
+  tasks: [],
+};
+
+export function startStatusServer(listenAddr: string) {
   const addr = listenAddr.replace("http://", "").replace("https://", "");
   const host = addr.split(":")[0];
   const port = parseInt(addr.split(":")[1], 10);
@@ -24,7 +32,7 @@ export function startStatusServer(
           "Access-Control-Max-Age": "86400",
         });
 
-        res.end(JSON.stringify(data));
+        res.end(JSON.stringify(data, null, 2));
       };
 
       const parseBody = async (): Promise<object> => {
@@ -68,17 +76,26 @@ export function startStatusServer(
           });
         }
 
+        // === Tasks ===
+        if (req.method === "GET" && pathname === "/state") {
+          return sendJSON(200, {
+            appState,
+            timestamp: new Date().toISOString(),
+          });
+        }
         // Default 404
         sendJSON(404, { error: "Not Found" });
       } catch (err) {
-        sendJSON(500, { error: "Internal Server Error" });
+        sendJSON(500, { error: `Internal Server Error ${err}` });
       }
     })().catch((err) => {
       log.error("Unhandled error in request handler:", err);
     });
   });
 
+  log.info("Starting native status server...");
   server.listen(port, host, () => {
     log.info(`Native status server running at ${listenAddr}/status`);
   });
+  log.info("Native status server started.");
 }
