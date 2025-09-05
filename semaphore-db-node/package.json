@@ -1,12 +1,13 @@
 {
   "name": "backend-ts",
   "scripts": {
-    "dev": "bun run --hot src/index.ts",
+    "dev": "bun run src/index.ts",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
   "dependencies": {
     "ethers": "^6.15.0",
+    "express": "^5.1.0",
     "js-logger": "^1.6.1",
     "hono": "^4.9.6",
     "golem-base-sdk": "^0.1.16"

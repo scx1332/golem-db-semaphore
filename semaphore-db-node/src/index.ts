@@ -5,6 +5,9 @@
 //Hono is a web framework similar to Express
 import { Hono } from "hono";
 import jsLogger, { ILogger } from "js-logger";
+import {getBytes, Wallet} from "ethers";
+import {AccountData, createClient, Tagged} from "golem-base-sdk";
+import {startStatusServer} from "./server";
 
 // Configure logger for convenience
 jsLogger.useDefaults();
@@ -17,68 +20,46 @@ jsLogger.setHandler(
     },
   }),
 );
-const log: ILogger = jsLogger.get("myLogger");
+export const log: ILogger = jsLogger.get("myLogger");
 
 // Create web server using Hono
 const app = new Hono();
 
-interface DiceThrow {
-  dice: number[];
-  sum: number;
-}
-
-// In-memory storage for dice throws
-//@todo Replace with Golem DB to practice Golem DB integration
-const data: DiceThrow[] = [];
-
-app.get("/", (c) => {
-  log.debug("Root endpoint called");
-  return c.text("Hello on Golem DB Workshop!");
-});
-
-app.get("/api/v1/me", async (c) => {
-  log.debug("Requested player name:", process.env.PLAYER_NAME || "default");
-  return c.json(process.env.PLAYER_NAME || "default");
-});
-
-app.get("/api/v1/throws", async (c) => {
-  log.debug("Returning throws:", data);
-  return c.json(data);
-});
-
-app.post("/api/v1/throws", async (c) => {
-  log.debug("Received request to roll dice...");
-  const roll = Array.from(
-    { length: 5 },
-    () => Math.floor(Math.random() * 6) + 1,
-  );
-  const diceThrow: DiceThrow = {
-    dice: roll,
-    sum: roll.reduce((a, b) => a + b, 0),
-  };
-  data.push(diceThrow);
-  log.debug("Dice rolled:", diceThrow);
-  return c.json(diceThrow);
-});
-
-async function initBeforeServerStarts() {
+async function init() {
   log.info("Connecting to Golem DB client...");
+
+  const wallet = new Wallet(process.env.WALLET_PRIVATE_KEY || "");
+  log.info("Successfully decrypted wallet for account", wallet.address);
+
+  const key: AccountData = new Tagged("privatekey", getBytes(wallet.privateKey));
+
+  const client = await createClient(
+    60138453033,
+    key,
+    "https://ethwarsaw.holesky.golemdb.io/rpc",
+    "wss://ethwarsaw.holesky.golemdb.io/rpc/ws"
+  );
+
+  const port = process.env.PORT || 5555;
+  log.info(`Starting server at http://localhost:${port}`);
+  startStatusServer(`http://localhost:${port}`);
+
+  const block = await client.getRawClient().httpClient.getBlockNumber();
+
+  while (true) {
+    log.info("Current Ethereum block number is", block);
+    log.info("Connected to Golem DB as", wallet.address);
+
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+  }
+
   // Fill your initialization code here
 }
 
-initBeforeServerStarts()
+init()
   .then(() => {
-    // Start the server on port 8000, if you change, fix also in frontend
-    const port = 8000;
-    // Default bun timeout is 10s which is sometimes not enough, feel free to adjust
-    const idleTimeout = 30;
-    log.info(`Starting server at http://localhost:${port}`);
-    // Serve using Bun's built-in server
-    Bun.serve({
-      idleTimeout,
-      port,
-      fetch: app.fetch,
-    });
+
   })
   .catch((e) => {
     log.error(e);
