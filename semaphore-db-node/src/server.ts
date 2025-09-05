@@ -62,13 +62,11 @@ export function startStatusServer(
 
         // === Routes ===
         if (req.method === "GET" && pathname === "/") {
-
           return sendJSON(200, {
             message: "Semaphore DB Node is running",
             timestamp: new Date().toISOString(),
           });
         }
-
 
         // Default 404
         sendJSON(404, { error: "Not Found" });

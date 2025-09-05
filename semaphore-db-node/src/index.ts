@@ -3,7 +3,6 @@
 //https://bun.sh/guides/runtime/set-env
 
 //Hono is a web framework similar to Express
-import { Hono } from "hono";
 import jsLogger, { ILogger } from "js-logger";
 import {getBytes, Wallet} from "ethers";
 import {AccountData, createClient, Tagged} from "golem-base-sdk";
@@ -20,10 +19,16 @@ jsLogger.setHandler(
     },
   }),
 );
+
 export const log: ILogger = jsLogger.get("myLogger");
 
-// Create web server using Hono
-const app = new Hono();
+
+async function spawnTask() {
+  log.info("Task spawned, doing nothing and exiting...");
+
+
+
+}
 
 async function init() {
   log.info("Connecting to Golem DB client...");
@@ -44,14 +49,14 @@ async function init() {
   log.info(`Starting server at http://localhost:${port}`);
   startStatusServer(`http://localhost:${port}`);
 
-  const block = await client.getRawClient().httpClient.getBlockNumber();
-
   while (true) {
+    const block = await client.getRawClient().httpClient.getBlockNumber();
     log.info("Current Ethereum block number is", block);
     log.info("Connected to Golem DB as", wallet.address);
 
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 500));
 
+    await spawnTask();
   }
 
   // Fill your initialization code here
