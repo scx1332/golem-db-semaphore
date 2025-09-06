@@ -1,15 +1,15 @@
 {
   "name": "backend-ts",
   "scripts": {
-    "dev": "bun run src/index.ts",
+    "dev": "ts-node src/index.ts",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
   "dependencies": {
+    "dotenv": "^17.2.2",
     "ethers": "^6.15.0",
     "express": "^5.1.0",
     "golem-base-sdk": "^0.1.16",
-    "hono": "^4.9.6",
     "js-logger": "^1.6.1",
     "uuid": "^12.0.0"
   },
@@ -17,6 +17,7 @@
     "@types/bun": "latest",
     "eslint": "^9.34.0",
     "prettier": "^3.6.2",
+    "ts-node": "^10.9.2",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.42.0"
   }

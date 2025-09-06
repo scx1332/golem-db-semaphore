@@ -2,25 +2,7 @@ import http from "http";
 import url from "url";
 
 import { log } from "./index";
-
-interface TaskInfo {
-  taskId: string;
-  description: string;
-  status: "waiting" | "running";
-  progress: number; // percentage from 0 to 100
-  startTime: string; // ISO string
-  message: string; // additional info about the task
-}
-
-interface ApplicationState {
-  numberOfTasks: number;
-  tasks: TaskInfo[];
-}
-
-export const appState: ApplicationState = {
-  numberOfTasks: 0,
-  tasks: [],
-};
+import {appState, operations} from "./queries";
 
 export function startStatusServer(listenAddr: string) {
   const addr = listenAddr.replace("http://", "").replace("https://", "");
@@ -81,6 +63,13 @@ export function startStatusServer(listenAddr: string) {
         if (req.method === "GET" && pathname === "/") {
           return sendJSON(200, {
             message: "Semaphore DB Node is running",
+            timestamp: new Date().toISOString(),
+          });
+        }
+        // === Tasks ===
+        if (req.method === "GET" && pathname === "/tasks/active") {
+          return sendJSON(200, {
+            taskIds: operations.getCurrentTaskList(),
             timestamp: new Date().toISOString(),
           });
         }

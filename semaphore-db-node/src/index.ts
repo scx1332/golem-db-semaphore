@@ -1,13 +1,12 @@
-//Bun automatically loads .env files, no need for dotenv package
-//import dotenv from "dotenv";
-//https://bun.sh/guides/runtime/set-env
-
-//Hono is a web framework similar to Express
 import jsLogger, { ILogger } from "js-logger";
 import { getBytes, Wallet } from "ethers";
 import { AccountData, createClient, Tagged } from "golem-base-sdk";
-import { appState, startStatusServer } from "./server";
+import { startStatusServer } from "./server";
 import { v4 as uuidv4 } from "uuid";
+import { operations, TaskInfo} from "./queries";
+import dotenv from 'dotenv';
+dotenv.config();
+
 
 // Configure logger for convenience
 jsLogger.useDefaults();
@@ -25,60 +24,59 @@ export const log: ILogger = jsLogger.get("myLogger");
 
 let taskNo = -1;
 
+
 async function spawnTask() {
   log.info("Task spawned, doing nothing and exiting...");
-  const taskId = uuidv4();
-  {
-    log.info(
-      "Checking for semaphore access...",
-    );
 
-    for (const myTask of appState.tasks) {
-      if (myTask.taskId !== taskId) continue;
-      myTask.progress = 0;
-      myTask.message = `Task is waiting for semaphore access`;
-      myTask.status = "waiting";
-    }
-    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    if (appState.tasks.length >= 5) {
-      log.info("Task not started.");
-      return;
-    }
+  log.info(
+    "Checking for semaphore access...",
+  );
+
+
+
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+
+  const globalTaskList = operations.getCurrentTaskList();
+  if (globalTaskList.length >= 5) {
+    log.info("Too many global tasks..., leaving");
+    return;
   }
 
+  const taskId = uuidv4();
+  taskNo += 0;
+  const newTask: TaskInfo = {
+    taskId,
+    description: `Task no ${taskNo}`,
+    status: "running",
+    progress: 0,
+    startTime: new Date().toISOString(),
+    message: "Task is running",
+  }
+
+
   try {
-    {
-      //add task
-      //should be atomic
-      taskNo += 1;
-      appState.numberOfTasks += 1;
-      appState.tasks.push({
-        taskId,
-        description: `Task no ${taskNo}`,
-        status: "running",
-        message: "Task is running",
-        progress: 0,
-        startTime: new Date().toISOString(),
-      });
-    }
+    const currTask = operations.appendTask(newTask);
+
     for (let i = 0; i < 10; i++) {
 
-      for (const myTask of appState.tasks) {
-        if (myTask.taskId !== taskId) continue;
-        myTask.progress = (i + 1) * 10;
-        myTask.message = `Task is running: ${myTask.progress}% done`;
-      }
+      currTask.progress = (i + 1) * 10;
+      currTask.message = `Task is running: ${currTask.progress}% done`;
 
+      operations.updateTask(currTask)
 
       await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 2000));
     }
   } catch (e) {
     log.error("Task failed with error:", e);
   } finally {
-    log.info(`Task ${taskId} finished.`);
-    appState.numberOfTasks -= 1;
-    appState.tasks = appState.tasks.filter((t) => t.taskId !== taskId);
+    log.info(`Task ${taskId} finished, unregistering...`);
+
+    try {
+      operations.removeTask(taskId);
+    } catch (ex) {
+      log.error(`Removing tasks failed: ${ex}`);
+    }
   }
 }
 
