@@ -9,6 +9,7 @@ dotenv.config();
 
 // Configure logger for convenience
 jsLogger.useDefaults();
+// @ts-ignore
 jsLogger.setLevel(jsLogger.DEBUG);
 jsLogger.setHandler(
   jsLogger.createDefaultHandler({

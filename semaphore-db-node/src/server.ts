@@ -1,5 +1,5 @@
-import http from "http";
-import url from "url";
+import http from "node:http";
+import url from "node:url";
 
 import { log } from "./app.ts";
 import { appState, operations } from "./queries.ts";
