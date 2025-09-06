@@ -1,7 +1,8 @@
 {
   "name": "backend-ts",
+  "type": "module",
   "scripts": {
-    "dev": "ts-node src/index.ts",
+    "dev": "node src/app.ts",
     "lint": "eslint .",
     "format": "prettier --write ."
   },

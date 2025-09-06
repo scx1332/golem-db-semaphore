@@ -1,13 +1,13 @@
 import http from "http";
 import url from "url";
 
-import { log } from "./index";
-import {appState, operations} from "./queries";
+import { log } from "./app.ts";
+import { appState, operations } from "./queries.ts";
 
 export function startStatusServer(listenAddr: string) {
   const addr = listenAddr.replace("http://", "").replace("https://", "");
   const host = addr.split(":")[0];
-  const port = parseInt(addr.split(":")[1], 10);
+  const port = parseInt(addr.split(":")[1] ?? "N/A", 10);
 
   const server = http.createServer((req, res) => {
     void (async () => {
@@ -26,7 +26,7 @@ export function startStatusServer(listenAddr: string) {
         res.end(JSON.stringify(data, null, 2));
       };
 
-      const parseBody = async (): Promise<object> => {
+      const _parseBody = async (): Promise<object> => {
         return new Promise((resolve, reject) => {
           let body = "";
           req.on("data", (chunk: string) => (body += chunk));

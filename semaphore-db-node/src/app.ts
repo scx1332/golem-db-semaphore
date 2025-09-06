@@ -1,12 +1,11 @@
-import jsLogger, { ILogger } from "js-logger";
+import jsLogger, { type ILogger } from "js-logger";
 import { getBytes, Wallet } from "ethers";
-import { AccountData, createClient, Tagged } from "golem-base-sdk";
-import { startStatusServer } from "./server";
+import { type AccountData, createClient, Tagged } from "golem-base-sdk";
+import { startStatusServer } from "./server.ts";
 import { v4 as uuidv4 } from "uuid";
-import { operations, TaskInfo} from "./queries";
-import dotenv from 'dotenv';
+import { operations, type TaskInfo } from "./queries.ts";
+import dotenv from "dotenv";
 dotenv.config();
-
 
 // Configure logger for convenience
 jsLogger.useDefaults();
@@ -24,16 +23,10 @@ export const log: ILogger = jsLogger.get("myLogger");
 
 let taskNo = -1;
 
-
 async function spawnTask() {
   log.info("Task spawned, doing nothing and exiting...");
 
-
-  log.info(
-    "Checking for semaphore access...",
-  );
-
-
+  log.info("Checking for semaphore access...");
 
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -52,20 +45,20 @@ async function spawnTask() {
     progress: 0,
     startTime: new Date().toISOString(),
     message: "Task is running",
-  }
-
+  };
 
   try {
     const currTask = operations.appendTask(newTask);
 
     for (let i = 0; i < 10; i++) {
-
       currTask.progress = (i + 1) * 10;
       currTask.message = `Task is running: ${currTask.progress}% done`;
 
-      operations.updateTask(currTask)
+      operations.updateTask(currTask);
 
-      await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 2000));
+      await new Promise((resolve) =>
+        setTimeout(resolve, 1000 + Math.random() * 2000),
+      );
     }
   } catch (e) {
     log.error("Task failed with error:", e);

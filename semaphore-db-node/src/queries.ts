@@ -7,7 +7,6 @@ export interface TaskInfo {
   message: string; // additional info about the task
 }
 
-
 interface ApplicationState {
   numberOfTasks: number;
   tasks: TaskInfo[];
@@ -17,7 +16,6 @@ export const appState: ApplicationState = {
   numberOfTasks: 0,
   tasks: [],
 };
-
 
 class Operations {
   public getCurrentTaskList(): TaskInfo[] {
@@ -30,7 +28,10 @@ class Operations {
 
   public appendTask(taskInfo: TaskInfo): TaskInfo {
     //check if task exist
-    if (appState.tasks.filter((task) => task.taskId === taskInfo.taskId).length > 0) {
+    if (
+      appState.tasks.filter((task) => task.taskId === taskInfo.taskId).length >
+      0
+    ) {
       throw new Error(`Task ${taskInfo.taskId} already exists`);
     }
     appState.tasks.push(taskInfo);
@@ -39,7 +40,9 @@ class Operations {
 
   public updateTask(taskInfo: TaskInfo) {
     //check if task exist
-    const taskIndex = appState.tasks.findIndex((task) => task.taskId === taskInfo.taskId);
+    const taskIndex = appState.tasks.findIndex(
+      (task) => task.taskId === taskInfo.taskId,
+    );
 
     if (taskIndex == -1) {
       throw new Error(`Task ${taskInfo.taskId} not exists`);
@@ -47,10 +50,11 @@ class Operations {
     appState.tasks[taskIndex] = taskInfo;
   }
 
-
   public removeTask(taskId: string): boolean {
     //check if task exits
-    const noTasks = appState.tasks.filter((task) => task.taskId === taskId).length;
+    const noTasks = appState.tasks.filter(
+      (task) => task.taskId === taskId,
+    ).length;
 
     if (noTasks > 1) {
       throw new Error(`Task ${taskId} has duplicate task ids`);
@@ -60,7 +64,6 @@ class Operations {
     }
     return false;
   }
-
 }
 
 export const operations = new Operations();
