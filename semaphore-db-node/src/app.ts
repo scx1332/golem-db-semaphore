@@ -30,7 +30,6 @@ async function spawnTask() {
   log.info("Checking for semaphore access...");
 
   await new Promise((resolve) => setTimeout(resolve, 1000));
-
   const globalTaskList = operations.getCurrentTaskList();
   if (globalTaskList.length >= 5) {
     log.info("Too many global tasks..., leaving");
@@ -38,7 +37,7 @@ async function spawnTask() {
   }
 
   const taskId = uuidv4();
-  taskNo += 0;
+  taskNo += 1;
   const newTask: TaskInfo = {
     taskId,
     description: `Task no ${taskNo}`,
@@ -52,14 +51,14 @@ async function spawnTask() {
     const currTask = operations.appendTask(newTask);
 
     for (let i = 0; i < 10; i++) {
+      await new Promise((resolve) =>
+        setTimeout(resolve, 1000 + Math.random() * 2000),
+      );
       currTask.progress = (i + 1) * 10;
       currTask.message = `Task is running: ${currTask.progress}% done`;
 
       operations.updateTask(currTask);
 
-      await new Promise((resolve) =>
-        setTimeout(resolve, 1000 + Math.random() * 2000),
-      );
     }
   } catch (e) {
     log.error("Task failed with error:", e);
@@ -101,7 +100,7 @@ async function init() {
     log.info("Current Ethereum block number is", block);
     log.info("Connected to Golem DB as", wallet.address);
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Spawn a task into the background
     const _ = spawnTask();
